@@ -1,0 +1,11 @@
+*.o
+*.x
+data
+*.mod
+*.dat
+*.h5
+pqdts_env
+timing_*
+status_*
+result_*
+povm.p
