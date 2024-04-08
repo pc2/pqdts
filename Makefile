@@ -2,7 +2,7 @@
 CC = g++ # C++ compiler
 FCC = gfortran #fortran compiler
 PFCC = mpif90 #fortran compile with MPI
-CFLAGS = -O3 -march=native -fopenmp -g -flto -fno-strict-aliasing
+CFLAGS = -O3 -march=native -fopenmp -g -fargument-noalias -ffreestanding -finline-functions -funroll-all-loops -fprefetch-loop-arrays
 CFFLAGS = -ffree-line-length-none -Werror=aliasing -Werror=ampersand -Werror=c-binding-type -Werror=intrinsic-shadow -Werror=intrinsics-std -Werror=line-truncation -Werror=tabs -Werror=target-lifetime -Werror=underflow -Werror=unused-but-set-variable -Werror=unused-variable -Werror=unused-parameter -Werror=unused-label -Werror=conversion -Werror=zerotrip -Wno-maybe-uninitialized -Wuninitialized -Wuse-without-only -fno-strict-aliasing
 
 #don't change the lines below

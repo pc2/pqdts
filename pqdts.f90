@@ -183,7 +183,6 @@ contains
       write (43, *) iter, timingn(i), timingc(i), timingsum(i)
     end do
     call flush (43)
-
   end subroutine
 
   subroutine fprob(x, mean, prob)
@@ -1064,6 +1063,7 @@ contains
     call MPI_ALLREDUCE(MPI_IN_PLACE, conv, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, ierr)
 #endif
     conv = sqrt(conv/(real(N, kind=real64)*real(M, kind=real64)))
+    !conv = sqrt(conv/(real(N, kind=real64)))
   end subroutine
 
   subroutine read_unformatted_binary_from_python(M, N, filename, A)
@@ -1202,7 +1202,7 @@ program pqdts
   real(kind=real64) :: conv, xmin
   logical :: tproj = .true.
   logical, parameter :: testder = .false.
-  logical, parameter :: tbench = .false.
+  logical :: tbench = .false.
   real(kind=real64), parameter :: dxp = 1e-7
   real(kind=real64) :: tactivetol = 1e-8
   real(kind=real64) :: conv_thres = 1e-6
@@ -1214,7 +1214,7 @@ program pqdts
   integer(kind=int32) :: tactive = 0
   logical :: precond = .false.
   real(kind=real64) :: Fsize = 0, dlalpha, smo_fact
-  integer(kind=int32) :: output, state, start_stage, rank2, read_input
+  integer(kind=int32) :: output, state, start_stage, rank2, read_input, bench
   integer(kind=int64) :: nact
   integer(kind=int64) :: M2, N2, D2, localrows2
   Character(len=255) :: str
@@ -1266,6 +1266,12 @@ program pqdts
   read (arg, *) read_input
   CALL getarg(13, arg)
   read (arg, *) smo_fact
+  CALL getarg(14, arg)
+  read (arg, *) bench
+
+  if(bench.eq.1)then
+    tbench=.true.
+  endif
 
 #ifdef MPI
   call MPI_Init(ierror)
@@ -1309,7 +1315,6 @@ program pqdts
   end if
 
   print *, rank, "localrows", localrows0, localrows1, localrows, rowdist(localrows0), rowdist(localrows1)
-
   if (Fl .ge. 0) then
     !FIXME only read F partially
     call read_sparse_from_python(Fl, "data/F_row.bin", "data/F_col.bin", "data/F_data.bin", Fi, Fj, Fd)
@@ -1531,7 +1536,7 @@ program pqdts
   else
     call random_number(P)
   end if
-
+  
   allocate (X(localrows, N))
   call pset(M, N, 0.0D0, x)
   allocate (dLdX(localrows, N))
@@ -1594,10 +1599,10 @@ program pqdts
 #endif
       t1 = omp_get_wtime()
       call dL(X, dLdX)
-      t2 = omp_get_wtime()
 #ifdef MPI
       call MPI_Barrier(MPI_COMM_WORLD, ierr)
 #endif
+      t2 = omp_get_wtime()
       if (rank .eq. 0) print *, "t dL", t2 - t1, dLdX(1, 1)
     end do
 
@@ -2131,8 +2136,11 @@ program pqdts
       end if
 
     end do
-    call conv_test(X, DLDX, output.ne.0, conv)
-    if (output .ge. 1) then
+    call conv_test(X, DLDX, output.ge.3, conv)
+    if (output .ge. 2) then
+#ifdef MPI
+      call MPI_Barrier(MPI_COMM_WORLD, ierr)
+#endif
       call tstart("output")
       !export
       write (outname, '(a,i6,a,i6,a)') "rank_", rank, "_oiter", oiter, ".dat"
@@ -2151,11 +2159,51 @@ program pqdts
       write (42) X
       close (42)
       call tstop("output")
+#ifdef MPI
+      call MPI_Barrier(MPI_COMM_WORLD, ierr)
+#endif
     end if
     call tprint(oiter)
   end do
   call tstop("min")
+
+  if (output .ge. 1) then
+    !some deallcoation to free memory to write to /dev/shm for compression
+    deallocate(dldx)
+    deallocate(sn)
+    deallocate(xtmp)
+    deallocate(O)
+    deallocate(z)
+    deallocate(ik)
+#ifdef MPI
+    call MPI_Barrier(MPI_COMM_WORLD, ierr)
+#endif
+    call tstart("output")
+    !export
+    write (outname, '(a,i6,a,i6,a)') "rank_", rank, "_final.dat"
+    print *, outname
+    INQUIRE (FILE=outname, EXIST=file_exists)
+    if (file_exists) then
+      open (42, file=trim(outname), status='old', FORM='unformatted')
+    else
+      open (42, file=trim(outname), status='new', FORM='unformatted')
+    end if
+    write (42) M
+    write (42) N
+    write (42) D
+    write (42) localrows
+    write (42) rank
+    write (42) X
+    close (42)
+    call tstop("output")
+#ifdef MPI
+    call MPI_Barrier(MPI_COMM_WORLD, ierr)
+#endif
+  end if
   call tprint(-1)
+#ifdef MPI
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
+#endif
 
   !get memory usage
   open (43, file="/proc/self/status", status='old', iostat=state)
@@ -2173,6 +2221,9 @@ program pqdts
   end do
   close (43)
   close (44)
+#ifdef MPI
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
+#endif
 
 #ifdef MPI
   call MPI_Finalize(ierror)

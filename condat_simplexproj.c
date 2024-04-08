@@ -59,7 +59,7 @@
 extern "C"{
 void simplexproj_condat_(double* y, double* x, int* plength) {
         int length=plength[0];
-	double*	aux = (x==y ? (double*)malloc(length*sizeof(double)) : x);
+	double*	aux = x; //(x==y ? (double*)malloc(length*sizeof(double)) : x);
 	double*  aux0=aux;
 	int		auxlength=1; 
 	int		auxlengthold=-1;	
@@ -91,6 +91,6 @@ void simplexproj_condat_(double* y, double* x, int* plength) {
 	} while (auxlength<=auxlengthold);
 	for (i=0; i<length; i++)
 		x[i]=(y[i]>tau ? y[i]-tau : 0.0); 
-	if (x==y) free(aux0);
+//	if (x==y) free(aux0);
 }
 } 

@@ -37,19 +37,15 @@ The most convenient way of using the program is with the included Python wrapper
 This wrapper has the following options:
 
 ```
-usage: pqdts.py [-h] -P PMATRIX [-F FMATRIX] [-D DMAX] [-t THREADS] -p
-                PQDTSPATH [-o OUTPUT] [-e EPSILON] [-g GAMMA] [-m MAXITER]
-                [-b] [-v]
+usage: pqdts.py [-h] -P PMATRIX [-F FMATRIX] [-D DMAX] [-t THREADS] -p PQDTSPATH [-o OUTPUT] [-e EPSILON] [-g GAMMA] [-m MAXITER] [-T] [-b] [-d] [-v]
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -P PMATRIX, --Pmatrix PMATRIX
-                        path to npz file (scipy sparse) or npy file (numpy) of
-                        P matrix (dimension D x N)
+                        path to npz file (scipy sparse) or npy file (numpy) of P matrix (dimension D x N)
   -F FMATRIX, --Fmatrix FMATRIX
-                        path to npz file (scipy sparse) or npy file (numpy) of
-                        F matrix (dimension D x M)
-  -D DMAX, --Dmax DMAX  truncate to D so that P is a D x M matrix
+                        path to npz file (scipy sparse) or npy file (numpy) of F matrix (dimension D x M)
+  -D DMAX, --Dmax DMAX  truncate to D so that P is a D x N matrix
   -t THREADS, --threads THREADS
                         numper of OpenMP threads to use
   -p PQDTSPATH, --pqdtspath PQDTSPATH
@@ -62,9 +58,12 @@ optional arguments:
                         regularization parameter
   -m MAXITER, --maxiter MAXITER
                         maximal number of iterations
-  -b, --benchmark       benchmark mode, don't write output POVMs
+  -T, --timing          measure timing for reconstruction, don't write output POVMs
+  -b, --benchmarkops    measure timing for underlying operations
+  -d, --dryrun          dry-run: only prepare inputs for pqdts
   -v, --verbose         be more verbose
 ```
+
 The dependencies of the wrapper can be installed with `pip3 install -r requirements.txt`.
 
 ### Command Line Arguments
@@ -76,12 +75,13 @@ Without the Python wrapper, the command line arguments of `pqdts_omp.x` and `pqd
 5. number of non-zero elements in $P$
 6. computation mode: 2 for two-metric projected truncated Newton method, 1 for projected gradient method 
 7. maxiter: maximal number of iterations in stages
-8. output: 0 to disable output of the POVMs, 1 to enable output of POVMs after every minimization stage
+8. output: 0 to disable output of the POVMs, 1 to enable output of POVMs at the end, 2 to enable output of POVMs after every minimization stage
 9. gamma: regularization parameter $\gamma$
 10. epsilon: value of the convergence criterion
 11. index of stage to start with, i.e., 1 or 2
 12. 0 to start with the initial guess $\varPi=1/N$, 1 to read the output from a previous run as a starting point
 13. smoothing distance factor $N_s$
+14. benchmark underlying operations: 0 for no, 1 for yes
 
 ### Inputs
 Without the Python wrapper, the programs `pqdts_omp.x` and `pqdts_omp_mpi.x` expect inputs ($P$ matrix and optionally the $F$ matrix) in the `data` directory in the current working directory. The following files are expected:

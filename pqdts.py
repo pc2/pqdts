@@ -27,7 +27,7 @@ def npz_to_fortran(npz,matname):
     coodata.tofile('data/'+matname+'_data.bin')
     return len(coo.data)
 
-def run_pqdts(N,M,D,P,threads,pqdtspath,maxiter=100,tol=1e-6,gamma=0,smo_int=0,smo_dist=0,start_stage=1,read_input=0,smo_fact=0,output=1,verbose=False,F=None):
+def run_pqdts(N,M,D,P,threads,pqdtspath,maxiter=100,tol=1e-6,gamma=0,smo_int=0,smo_dist=0,start_stage=1,read_input=0,smo_fact=0,output=1,verbose=False,F=None,dry=False,benchops=0):
     #set environment variables for OpenMP
     os.environ["OMP_NUM_THREADS"] = str(threads)
     os.environ["OMP_PROC_BIND"] = "True"
@@ -38,10 +38,14 @@ def run_pqdts(N,M,D,P,threads,pqdtspath,maxiter=100,tol=1e-6,gamma=0,smo_int=0,s
     if not (F is None):
         NF=npz_to_fortran(F,"F")
     #call pqdts
-    cmd=pqdtspath+" "+str(M)+" "+str(N)+" "+str(D)+" "+str(NF)+" "+str(NP)+" 2 "+str(maxiter)+" "+str(output)+" "+str(gamma)+" "+str(tol)+" "+str(start_stage)+" "+str(read_input)+" "+str(smo_fact)
+    cmd=pqdtspath+" "+str(M)+" "+str(N)+" "+str(D)+" "+str(NF)+" "+str(NP)+" 2 "+str(maxiter)+" "+str(output)+" "+str(gamma)+" "+str(tol)+" "+str(start_stage)+" "+str(read_input)+" "+str(smo_fact)+" "+str(benchops)
+    if dry:
+        print("not executing:")
+        print(cmd)
+        return None
+
     if verbose:
         print("executing:",cmd)
-    
     start = time.time()
     out=subprocess.run(cmd, shell=True, capture_output=True)
     end = time.time()
@@ -93,7 +97,9 @@ parser.add_argument("-o", "--output", help="output file for povm as pickle",type
 parser.add_argument("-e", "--epsilon", help="convergence parameter of minimization",type=float,default=1e-6)
 parser.add_argument("-g", "--gamma", help="regularization parameter",type=float,default=0)
 parser.add_argument("-m", "--maxiter", help="maximal number of iterations",type=int,default=200)
-parser.add_argument("-b", "--benchmark", help="benchmark mode, don't write output POVMs",action='store_true')
+parser.add_argument("-T", "--timing", help="measure timing for reconstruction, don't write output POVMs",action='store_true')
+parser.add_argument("-b", "--benchmarkops", help="measure timing for underlying operations",action='store_true')
+parser.add_argument("-d", "--dryrun", help="dry-run: only prepare inputs for pqdts",action='store_true')
 parser.add_argument("-v", "--verbose", help="be more verbose",action='store_true')
 args = parser.parse_args()
 
@@ -136,12 +142,18 @@ print("N=",N,"D=",D,"M=",M,"N*M=",N*M)
 
 #call OpenMP-version of pqdts
 output=1
-if args.benchmark:
+benchops=0
+if args.timing:
     output=0
+if args.benchmarkops:
+    benchops=1
 if not(args.Fmatrix is None):
-    povm=run_pqdts(N,M,D,P,threads=args.threads,pqdtspath=args.pqdtspath,maxiter=args.maxiter,tol=args.epsilon,gamma=args.gamma,verbose=args.verbose,output=output,F=F)
+    povm=run_pqdts(N,M,D,P,threads=args.threads,pqdtspath=args.pqdtspath,maxiter=args.maxiter,tol=args.epsilon,gamma=args.gamma,verbose=args.verbose,output=output,F=F,dry=args.dryrun,benchops=benchops)
 else:
-    povm=run_pqdts(N,M,D,P,threads=args.threads,pqdtspath=args.pqdtspath,maxiter=args.maxiter,tol=args.epsilon,gamma=args.gamma,verbose=args.verbose,output=output)
+    povm=run_pqdts(N,M,D,P,threads=args.threads,pqdtspath=args.pqdtspath,maxiter=args.maxiter,tol=args.epsilon,gamma=args.gamma,verbose=args.verbose,output=output,dry=args.dryrun,benchops=benchops)
+
+if povm is None:
+    quit()
 
 #check constraints
 x1=0
