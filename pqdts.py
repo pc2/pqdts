@@ -71,7 +71,7 @@ def run_pqdts(N,M,D,P,threads,pqdtspath,maxiter=100,tol=1e-6,gamma=0,smo_int=0,s
     print("objective value=",O)
 
     #read output povm
-    f='rank_     0_oiter     2.dat'
+    f='rank_     0_final.dat'
     fi = FortranFile(f, 'r')
     A=fi.read_ints(np.int32)
     M=A[0]
