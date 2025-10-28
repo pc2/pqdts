@@ -37,26 +37,27 @@ The most convenient way of using the program is with the included Python wrapper
 This wrapper has the following options:
 
 ```
-usage: pqdts.py [-h] -P PMATRIX [-F FMATRIX] [-D DMAX] [-t THREADS] -p PQDTSPATH [-o OUTPUT] [-e EPSILON] [-g GAMMA] [-m MAXITER] [-T] [-b] [-d] [-v]
+usage: pqdts.py [-h] -P PMATRIX [-F FMATRIX] [-D DMAX] [-M MMAX] [-i INITIAL] [-t THREADS] -p PQDTSPATH [-o OUTPUT] [-e EPSILON] [-g GAMMA] [-m MAXITER] [-T] [-b] [-d] [-v]
 
 options:
   -h, --help            show this help message and exit
-  -P PMATRIX, --Pmatrix PMATRIX
+  -P, --Pmatrix PMATRIX
                         path to npz file (scipy sparse) or npy file (numpy) of P matrix (dimension D x N)
-  -F FMATRIX, --Fmatrix FMATRIX
+  -F, --Fmatrix FMATRIX
                         path to npz file (scipy sparse) or npy file (numpy) of F matrix (dimension D x M)
-  -D DMAX, --Dmax DMAX  truncate to D so that P is a D x N matrix
-  -t THREADS, --threads THREADS
+  -D, --Dmax DMAX       truncate to D so that P is a D x N matrix, positive D include D low indices ([:D]), negative D include D high indices [-D:]
+  -M, --Mmax MMAX       truncate to M so that F is a D x M matrix, positive M include M low indices ([:M]), negative M include M high indices [-M:]
+  -i, --initial INITIAL
+                        path to npz file (scipy sparse) or npy file (numpy) of initial povm matrix (dimension M x N)
+  -t, --threads THREADS
                         numper of OpenMP threads to use
-  -p PQDTSPATH, --pqdtspath PQDTSPATH
+  -p, --pqdtspath PQDTSPATH
                         path to compiled pqdts_omp.x
-  -o OUTPUT, --output OUTPUT
-                        output file for povm as pickle
-  -e EPSILON, --epsilon EPSILON
+  -o, --output OUTPUT   output file for povm as npy
+  -e, --epsilon EPSILON
                         convergence parameter of minimization
-  -g GAMMA, --gamma GAMMA
-                        regularization parameter
-  -m MAXITER, --maxiter MAXITER
+  -g, --gamma GAMMA     regularization parameter
+  -m, --maxiter MAXITER
                         maximal number of iterations
   -T, --timing          measure timing for reconstruction, don't write output POVMs
   -b, --benchmarkops    measure timing for underlying operations

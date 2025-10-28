@@ -9,3 +9,5 @@ timing_*
 status_*
 result_*
 povm.p
+*.npy
+*.npz

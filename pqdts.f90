@@ -1840,7 +1840,7 @@ program pqdts
   !read inital state if it exists
   oiter = start_stage
   INQUIRE (FILE=trim(str), EXIST=file_exists)
-  write (outname, '(a,i6,a,i6,a)') "rank_", rank, "_oiter", oiter, ".dat"
+  write (outname, '(a,i6,a,i6,a)') "data/initial_", rank,".dat"
   INQUIRE (FILE=outname, EXIST=file_exists)
   if (file_exists .and. read_input .eq. 1) then
     print *, "reading starting state from", trim(adjustl(outname))
